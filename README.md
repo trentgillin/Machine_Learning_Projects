@@ -1,7 +1,7 @@
 README
 ================
 
-<img src="misc/pic.png" alt="banner" align="center" width = "25%" height="25%"/>
+<img src="misc/pic2.png" alt="banner" align="center" width = "25%" height="25%"/>
 
 ## Overview
 
