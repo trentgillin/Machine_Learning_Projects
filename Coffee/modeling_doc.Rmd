@@ -1,0 +1,36 @@
+---
+title: "Coffee Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 8, fig.height = 5)
+
+# packages
+library(tidymodels)
+library(tidyverse)
+```
+
+I am going to try and fit a model that predicts coffee reviews using a coffee data set I found. This is a data set from the Coffee Quality Institute's webpage, it consists of quality reviews of different brands of coffee. My goal is to try and come up with a model that will predict a coffee's quality score. 
+
+```{r}
+coffee <- read_csv(here::here("Coffee/arabica_ratings_raw.csv"))
+```
+
+## Data Cleaning
+
+I first need to do a little bit of data cleaning. I want to select the columns that relate to the coffee quality score and remove any meta data columns that came with the data. I will also need to make sure that each of the columns that show the different parts of the review use the same units of measurement.
+
+```{r}
+# overview of data set
+glimpse(coffee)
+```
+
+
+## Explore data
+
+
+## Build models
+
+
+## Evaluate models
