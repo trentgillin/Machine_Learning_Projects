@@ -26,11 +26,161 @@ I first need to do a little bit of data cleaning. I want to select the columns t
 glimpse(coffee)
 ```
 
+```{r}
+# remove meta data columns
+coffee_clean <- coffee %>%
+  select(-contains("NA")) %>%
+  select("ID" = `...1`, quality_score,
+         Aroma, Flavor, Aftertaste, Acidity,
+         Body, Balance, Uniformity, `Clean Cup`, 
+         Sweetness, Moisture, `Category One Defects`, Quakers,
+         Color, `Category Two Defects`) %>%
+  distinct()
+
+# quick look to make sure columns are all the right type
+glimpse(coffee_clean)
+
+# convert moisture clean to numeric
+coffee_clean <- coffee_clean %>%
+  mutate(Moisture = str_extract(Moisture, "[0-9]+"),
+         Moisture = as.numeric(Moisture),
+         Moisture = Moisture/100)
+
+# make defect columns numeric
+coffee_clean <- coffee_clean %>%
+  mutate_at(vars(contains("Defects")), list(~str_extract(., "[0-9]+"))) %>%
+  mutate_at(vars(contains("Defects")), list(~as.numeric(.)))
+
+# fix column names
+coffee_clean <- coffee_clean %>%
+  janitor::clean_names()
+
+# check for NAs
+nas <- coffee_clean %>%
+  filter_all(any_vars(is.na(.)))
+
+# most color NA, will replace with a 'not listed'
+# one na in quakers, will remove
+coffee_clean <- coffee_clean %>%
+  mutate(color = if_else(is.na(color), "Not Listed", color)) %>%
+  filter(!is.na(quakers))
+```
 
 ## Explore data
+
+```{r}
+# historgram
+coffee_clean %>%
+  ggplot(aes(quality_score)) + 
+  geom_histogram(fill = "darkgreen", alpha = 0.8)
+
+# some interesting outliers, better do a boxplot to confirm
+coffee_clean %>%
+  ggplot(aes(quality_score)) + 
+  geom_boxplot()
+
+# pretty normally distributed data, but there are a few outliers towards the lower end of the data
+summary(coffee_clean$quality_score)
+
+# look at those with 0 quality score
+# one observation where most columns are just '0'
+check_quality <- coffee_clean %>%
+  filter(quality_score == 0)
+
+# remove one zero outliers 
+# historgram
+coffee_clean %>%
+  filter(quality_score != 0) %>%
+  ggplot(aes(quality_score)) + 
+  geom_histogram(fill = "darkgreen", alpha = 0.8)
+
+coffee_clean <- coffee_clean %>%
+  filter(quality_score != 0)
+
+# some common scatter plots
+# pretty decent linear relationship 
+coffee_clean %>%
+  ggplot(aes(quality_score, aroma)) + 
+  geom_point() 
+
+coffee_clean %>%
+  ggplot(aes(quality_score, acidity)) + 
+  geom_point()
+
+coffee_clean %>%
+  ggplot(aes(quality_score, body)) + 
+  geom_point()
+
+# a breakdown of quality score by binned aftertaste
+coffee_clean %>%
+  filter(!is.na(aftertaste)) %>%
+  mutate(aftertaste = cut_number(aftertaste, 4)) %>%
+  ggplot(aes(aftertaste, quality_score, fill = aftertaste)) +
+  geom_boxplot(alpha = 0.2, show.legend = FALSE)
+```
 
 
 ## Build models
 
+```{r}
+set.seed(123)
+coffee_clean <- initial_split(data = coffee_clean, strata = quality_score)
+coffee_train <- training(coffee_clean)
+coffee_test <- testing(coffee_clean)
+
+set.seed(234)
+coffee_folds <- vfold_cv(coffee_train, strata = quality_score)
+
+
+xgb_spec <-
+  boost_tree(
+    trees = tune(),
+    mtry = tune(),
+    min_n = tune(),
+    learn_rate = tune(),
+    loss_reduction = tune(),
+    sample_size = tune()
+  ) %>%
+  set_engine("xgboost") %>%
+  set_mode("regression")
+
+coffee_rec <- 
+  recipe(quality_score ~ ., data = coffee_train) %>%
+  update_role(id, new_role = "ID") %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_zv(all_predictors()) %>%
+  step_dummy(all_nominal_predictors()) 
+
+
+xgb_wf <- workflow(coffee_rec, xgb_spec)
+
+# tune the model
+doParallel::registerDoParallel()
+
+set.seed(234)
+xgb_coffee_rs <-
+  tune_grid(
+    xgb_wf,
+    coffee_folds,
+    grid = 20
+  )
+```
+
+
 
 ## Evaluate models
+
+```{r}
+show_best(xgb_coffee_rs, metric = "rsq")
+
+xgb_last <-
+  xgb_wf %>%
+  finalize_workflow(select_best(xgb_coffee_rs, "rsq")) %>%
+  last_fit(coffee_clean)
+
+library(vip)
+xgb_fit <- extract_fit_parsnip(xgb_last)
+vip(xgb_fit, geom = "point", num_features = 12)
+```
+
+It seems that the most important variables in the quality score are flavor, clean_cup and aftertaste. 
