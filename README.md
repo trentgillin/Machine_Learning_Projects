@@ -18,3 +18,8 @@ progress with new data and code being constantly added.
     webpage. The data consists of different coffee bean reviews. In this
     project, I will build a model that is able to predict a coffee
     bean’s quality.
+
+-   Marvel: data pulled from FiveThirtyEight’s github page. The goal of
+    this project is to try and come up with a model that will predict if
+    a Marvel characters is good, bad, or neutral based on physical
+    characteristics and meta data.

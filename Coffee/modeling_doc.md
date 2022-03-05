@@ -245,7 +245,7 @@ coffee_clean %>%
 
 ![](modeling_doc_files/figure-gfm/unnamed-chunk-4-7.png)<!-- -->
 
-## Build models
+## Build model
 
 ``` r
 set.seed(123)
@@ -272,6 +272,7 @@ xgb_spec <-
 coffee_rec <- 
   recipe(quality_score ~ ., data = coffee_train) %>%
   update_role(id, new_role = "ID") %>%
+  step_string2factor(all_nominal_predictors()) %>%
   step_normalize(all_numeric_predictors()) %>%
   step_zv(all_predictors()) %>%
   step_dummy(all_nominal_predictors()) 
@@ -293,7 +294,7 @@ xgb_coffee_rs <-
 
     ## i Creating pre-processing data to finalize unknown parameter: mtry
 
-## Evaluate models
+## Evaluate model
 
 ``` r
 show_best(xgb_coffee_rs, metric = "rsq")
