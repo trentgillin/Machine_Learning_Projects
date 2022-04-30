@@ -16,6 +16,8 @@ want to use the data sets to enhance my machine learning and visualization skill
 
 ## Table Of Contents
 
+- Test_Project: Just a playground to play with test data sets.
+
 - Coffee: data pulled from [jldbc-github](https://github.com/jldbc/coffee-quality-database). This 
 is web scraped data from the Coffee Quality Institute's webpage. The data consists of different coffee bean reviews. In this project, I will build a model that is able to predict a coffee bean's quality. 
 

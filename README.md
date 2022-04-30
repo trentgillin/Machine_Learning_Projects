@@ -12,6 +12,8 @@ progress with new data and code being constantly added.
 
 ## Table Of Contents
 
+-   Test\_Project: Just a playground to play with test data sets.
+
 -   Coffee: data pulled from
     [jldbc-github](https://github.com/jldbc/coffee-quality-database).
     This is web scraped data from the Coffee Quality Institute’s
